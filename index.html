@@ -31,6 +31,7 @@
     </style>
 </head>
 <body>
+    <h>Wood: <span id="blocks"></span> ------------------ Stone: <span id="stoneblocks"></span> ------------------ FishyTanks: <span id="fishyblocks"></span> ------------------ Selected Block: <span id="selected"></span></h>
     <div id="blocker">
         <div id="instructions">
             <p style="font-size:36px">
@@ -72,6 +73,7 @@
         let cubes;
         let cubes2;
         let cubes3;
+        let cubes4;
         let pointer, raycaster2, isShiftDown = false;
 
         let rollOverMesh, rollOverMaterial;
@@ -90,10 +92,14 @@
 
         var fishyTanks = 100;
         var trees = 350;
+        var stones = 80;
 
         var X = 0;
         var Y = 0;
 
+        var woodBlocks = 0;
+        var stoneBlocks = 0;
+        var fishyBlocks = 0;
 
         const exporter = new GLTFExporter();
 
@@ -120,43 +126,54 @@
         texture3.magFilter = THREE.NearestFilter;
         var texture4 = new THREE.TextureLoader().load('Blatt.png');
         texture4.magFilter = THREE.NearestFilter;
+        var texture44 = new THREE.TextureLoader().load('Stein.png');
+        texture44.magFilter = THREE.NearestFilter;
         const instancematerial2 = new THREE.MeshStandardMaterial({ map: texture3 });
         const instancematerial3 = new THREE.MeshStandardMaterial({ map: texture4 });
+        const stonematerial = new THREE.MeshStandardMaterial({ map: texture44 });
         const material = new THREE.MeshStandardMaterial({ map: texture2 });
         const cube = new THREE.Mesh(geometry, material);
-        cubes = new THREE.InstancedMesh(cubegeometry, instancematerial, fishyTanks);
-        cubes2 = new THREE.InstancedMesh(cubegeometry2, instancematerial2, trees);
-        cubes3 = new THREE.InstancedMesh(cubegeometry3, instancematerial3, trees);
 
         scene.add(cube);
         objects.push(cube);
 
-        const matrix = new THREE.Matrix4();
-        const matrix2 = new THREE.Matrix4();
-        const matrix3 = new THREE.Matrix4();
-
         for (let i = 0; i < fishyTanks; i++) {
             getRandomInt(-50, 50, 10);
-            matrix.setPosition(X + 6.25, 0 + 6.25, Y + 6.25);
-            cubes.setMatrixAt(i, matrix);
+            cubes = new THREE.Mesh(cubegeometry, instancematerial);
+            objects.push(cubes);
+            objects2.push(cubes);
+            cubes.position.set(X + 6.25, 6.25, Y + 6.25);
+            scene.add(cubes);
+            cubes.name = 'fishy';
+        }
+        for (let i = 0; i < stones; i++) {
+            getRandomInt(-50, 50, 10);
+            cubes4 = new THREE.Mesh(cubegeometry, stonematerial);
+            objects.push(cubes4);
+            objects2.push(cubes4);
+            cubes4.position.set(X + 6.25, 6.25, Y + 6.25);
+            scene.add(cubes4);
+            cubes4.name = 'stone';
         }
         for (let i = 0; i < trees; i++) {
             getRandomInt(-17, 17, 30);
-            matrix2.setPosition(X + 6.25, 10 + 6.25, Y + 6.25);
-            matrix3.setPosition(X + 6.25, 30 + 6.25, Y + 6.25);
-            cubes2.setMatrixAt(i, matrix2);
-            cubes3.setMatrixAt(i, matrix3);
+            cubes2 = new THREE.Mesh(cubegeometry2, instancematerial2);
+            cubes3 = new THREE.Mesh(cubegeometry3, instancematerial3);
+            objects.push(cubes2);
+            objects.push(cubes3);
+            objects2.push(cubes2);
+            objects2.push(cubes3);
+            cubes2.position.set(X + 6.25, 10 + 6.25, Y + 6.25);
+            cubes3.position.set(X + 6.25, 30 + 6.25, Y + 6.25);
+            scene.add(cubes2);
+            scene.add(cubes3);
+            cubes2.name = 'tree';
         }
 
         scene.add(cubes);
-        scene.add(cubes2);
-        scene.add(cubes3);
 
         objects.push(cubes);
-        objects.push(cubes3);
         objects2.push(cubes);
-        objects2.push(cubes2);
-        objects2.push(cubes3);
 
         var light = new THREE.DirectionalLight(0xffffff, 1);
         light.position.set(0, 1, 0);
@@ -303,7 +320,7 @@
                     }
                 }
                 if (event.keyCode == 69) {
-                    if (materialSwitch < 1) {
+                    if (materialSwitch < 2) {
                         materialSwitch++;
                     }
                 }
@@ -320,12 +337,15 @@
             else if (materialSwitch == 1) {
                 blockTexture = 'Stein.png';
             }
+            else if (materialSwitch == 2) {
+                blockTexture = 'FishyTank2.png';
+            }
 
             var texture6 = new THREE.TextureLoader().load(blockTexture);
             texture6.magFilter = THREE.NearestFilter;
 
             cubeMaterial = new THREE.MeshStandardMaterial({ map: texture6 });
-            rollOverMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0.5, transparent: true});
+            rollOverMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0.5, transparent: true });
         }
 
 
@@ -393,7 +413,7 @@
 
                 if (isShiftDown) {
 
-                    if (intersect.object !== plane && intersect.object !== cubes && intersect.object !== cubes2 && intersect.object !== cubes3) {
+                    if (intersect.object !== plane && intersect.object.name !== 'tree' && intersect.object.name !== 'wood' && intersect.object.name !== 'stone' && intersect.object.name !== 'fishy') {
 
                         scene.remove(intersect.object);
 
@@ -401,8 +421,47 @@
                         objects2.splice(objects2.indexOf(intersect.object), 1);
 
                     }
+                    else if (intersect.object.name == 'tree') {
 
-                } else {
+                        scene.remove(intersect.object);
+
+                        objects.splice(objects.indexOf(intersect.object), 1);
+                        objects2.splice(objects2.indexOf(intersect.object), 1);
+
+                        woodBlocks += 2;
+                    }
+                    else if (intersect.object.name == 'wood') {
+
+                        scene.remove(intersect.object);
+
+                        objects.splice(objects.indexOf(intersect.object), 1);
+                        objects2.splice(objects2.indexOf(intersect.object), 1);
+
+                        woodBlocks++;
+                    }
+                    else if (intersect.object.name == 'stone') {
+
+                        scene.remove(intersect.object);
+
+                        objects.splice(objects.indexOf(intersect.object), 1);
+                        objects2.splice(objects2.indexOf(intersect.object), 1);
+
+                        stoneBlocks++;
+                    }
+                    else if (intersect.object.name == 'fishy') {
+
+                        scene.remove(intersect.object);
+
+                        objects.splice(objects.indexOf(intersect.object), 1);
+                        objects2.splice(objects2.indexOf(intersect.object), 1);
+
+                        fishyBlocks++;
+                    }
+
+                }
+                else if (woodBlocks > 0 && blockTexture == 'Block.png') {
+
+                    woodBlocks--;
 
                     const voxel = new THREE.Mesh(cubeGeo, cubeMaterial);
                     voxel.position.copy(intersect.point).add(intersect.face.normal);
@@ -411,6 +470,38 @@
 
                     objects.push(voxel);
                     objects2.push(voxel);
+
+                    voxel.name = 'wood';
+
+                }
+                else if (stoneBlocks > 0 && blockTexture == 'Stein.png') {
+
+                    stoneBlocks--;
+
+                    const voxel = new THREE.Mesh(cubeGeo, cubeMaterial);
+                    voxel.position.copy(intersect.point).add(intersect.face.normal);
+                    voxel.position.divideScalar(10).floor().multiplyScalar(10).addScalar(6.25);
+                    scene.add(voxel);
+
+                    objects.push(voxel);
+                    objects2.push(voxel);
+
+                    voxel.name = 'stone';
+
+                }
+                else if (fishyBlocks > 0 && blockTexture == 'FishyTank2.png') {
+
+                    fishyBlocks--;
+
+                    const voxel = new THREE.Mesh(cubeGeo, cubeMaterial);
+                    voxel.position.copy(intersect.point).add(intersect.face.normal);
+                    voxel.position.divideScalar(10).floor().multiplyScalar(10).addScalar(6.25);
+                    scene.add(voxel);
+
+                    objects.push(voxel);
+                    objects2.push(voxel);
+
+                    voxel.name = 'fishy';
 
                 }
             }
@@ -471,11 +562,24 @@
 
             exporter.parse(scene, function (gltf) {
                 console.log(JSON.stringify(gltf));
-            }, {trs: true});
+            }, { trs: true });
         }
 
 
         function animate() {
+            document.getElementById("blocks").innerHTML = woodBlocks;
+            document.getElementById("stoneblocks").innerHTML = stoneBlocks;
+            document.getElementById("fishyblocks").innerHTML = fishyBlocks;
+
+            if (blockTexture == 'Stein.png') {
+                document.getElementById("selected").innerHTML = 'Stone';
+            }
+            else if (blockTexture == 'Block.png') {
+                document.getElementById("selected").innerHTML = 'Wood';
+            }
+            else if (blockTexture == 'FishyTank2.png') {
+                document.getElementById("selected").innerHTML = 'FishyTank';
+            }
 
             updateMaterial();
 
